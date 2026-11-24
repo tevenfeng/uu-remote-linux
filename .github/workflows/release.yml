@@ -1,12 +1,14 @@
 name: Release
 
+# This fork publishes the x86_64 deb/tarball only; aarch64, the loong64 follow-up
+# and the ghcr image stay with the upstream repo (hardcoded namespaces would fail here).
+
 on:
   push:
     tags: ['v*']
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
   # GNOME/KDE Wayland engine: libei >= 1.1 first ships in Ubuntu 24.04, so this plugin needs
@@ -16,7 +18,6 @@ jobs:
       matrix:
         include:
           - { arch: x86_64, runner: ubuntu-24.04 }
-          - { arch: aarch64, runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +39,6 @@ jobs:
       matrix:
         include:
           - { arch: x86_64, runner: ubuntu-22.04 }
-          - { arch: aarch64, runner: ubuntu-22.04-arm }
     # Built on 22.04 so the binary also runs on Ubuntu 22.04/24.04 and newer Debian (glibc >= 2.35).
     runs-on: ${{ matrix.runner }}
     steps:
@@ -104,23 +104,3 @@ jobs:
             uu-remote-linux-*.tar.gz.sha256
             uu-remote-linux_*.deb
             uu-remote-linux_*.deb.sha256
-
-  # Headless NAS image (packaging/docker/), built from the release tarball published by the job above.
-  docker:
-    needs: release
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: packaging/docker
-          build-args: VERSION=${{ github.ref_name }}
-          push: true
-          tags: |
-            ghcr.io/vallierdev/uu-remote-linux:${{ github.ref_name }}
-            ghcr.io/vallierdev/uu-remote-linux:latest

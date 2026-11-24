@@ -64,7 +64,9 @@ jobs:
     name: linux-loongarch64
     # workflow_run fires for failed runs too, and a Release that died before its
     # publisher job left no release to attach to: skip those without a runner.
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # The automatic follow-up also stays with the upstream repo: this fork releases
+    # x86_64 only, and a multi-hour emulated build should not start on every fork.
+    if: (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && github.repository == 'VallierDev/uu-remote-linux'
     runs-on: ubuntu-24.04
     # 360 min is the platform ceiling for a single job, so this is already the
     # maximum and cannot be raised further; an emulated release build is the one
